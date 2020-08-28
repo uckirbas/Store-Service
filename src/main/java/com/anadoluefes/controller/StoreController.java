@@ -32,6 +32,12 @@ public class StoreController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @GetMapping("/hello")
+    public String hello() {
+        return "hello";
+    }
+
+
 
     @GetMapping("/store")
     public List<Map<String, Object>> getAll() {
