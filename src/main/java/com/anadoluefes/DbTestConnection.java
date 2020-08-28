@@ -21,4 +21,25 @@ public class DbTestConnection {
         return conn;
     }
 
+    /*
+    public Connection connect() throws SQLException {
+        return DriverManager.getConnection("jdbc:postgresql://localhost:5432/storetest", "postgres", "root1234");
+    }
+     */
+
+    /*
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(UPDATE_QUERY_JSON)) {
+
+            pstmt.setObject(1, formData);
+            pstmt.setString(2, name);
+
+             pstmt.executeUpdate();
+
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+     */
+
+
 }
