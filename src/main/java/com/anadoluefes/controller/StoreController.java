@@ -25,7 +25,7 @@ public class StoreController {
     final String DELETE_QUERY_HSTORE = "DELETE FROM test_hstore WHERE name = ?";
 
     final String INSERT_QUERY_JSON = "INSERT INTO test_store (name,json_field) VALUES (?,to_json(?::json))";
-    final String UPDATE_QUERY_JSON = "UPDATE test_store SET json = to_json(?::json) WHERE name = ?";
+    final String UPDATE_QUERY_JSON = "UPDATE test_store SET json_field = to_json(?::json) WHERE name = ?";
     final String DELETE_QUERY_JSON = "DELETE FROM test_store WHERE name = ?";
 
 
