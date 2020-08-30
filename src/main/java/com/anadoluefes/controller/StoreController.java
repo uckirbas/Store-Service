@@ -57,7 +57,7 @@ public class StoreController {
     @RequestMapping(
             value = "/store",
             method = RequestMethod.POST,
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public String create(@RequestBody MultiValueMap<String, String> formData)
             throws Exception {
