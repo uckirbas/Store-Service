@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import java.util.List;
 import java.util.Map;
 
-
+@CrossOrigin
 @RestController
 @EnableWebMvc
 public class StoreController {

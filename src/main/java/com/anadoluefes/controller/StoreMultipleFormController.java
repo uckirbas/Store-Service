@@ -4,12 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import java.util.Map;
-
+@CrossOrigin
 @RestController
 @EnableWebMvc
 public class StoreMultipleFormController {
@@ -25,8 +23,8 @@ public class StoreMultipleFormController {
     final String UPDATE_QUERY_HSTORE = "UPDATE test_hstore SET store_pair = ? WHERE name = ?";
     final String DELETE_QUERY_HSTORE = "DELETE FROM test_hstore WHERE name = ?";
 
-    final String INSERT_QUERY_JSON = "INSERT INTO test_store (name,json) VALUES (?,to_json(?::json))";
-    final String UPDATE_QUERY_JSON = "UPDATE test_store SET json = to_json(?::json) WHERE name = ?";
+    final String INSERT_QUERY_JSON = "INSERT INTO test_store (name,json_field) VALUES (?,to_json(?::json))";
+    final String UPDATE_QUERY_JSON = "UPDATE test_store SET json_field = to_json(?::json) WHERE name = ?";
     final String DELETE_QUERY_JSON = "DELETE FROM test_store WHERE name = ?";
 
 
