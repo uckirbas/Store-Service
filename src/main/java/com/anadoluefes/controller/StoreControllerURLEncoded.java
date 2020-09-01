@@ -4,13 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 @CrossOrigin
 @RestController
 @EnableWebMvc
-public class StoreMultipleFormController {
+public class StoreControllerURLEncoded {
 
     /* Sample For multipart/form-data */
 
@@ -33,24 +34,53 @@ public class StoreMultipleFormController {
     private JdbcTemplate jdbcTemplate;
 
 
-    @RequestMapping(value = "/multiple/store", method = RequestMethod.POST,
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
 
-    String create(@RequestPart(value = "key")  String key ,
-                  @RequestPart(value = "json")  String json) {
-        System.out.println(key);
-        System.out.println(json);
+    /* URLENCODED_VALUE POST */
+    @RequestMapping(
+            value = "wform/store",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+    )
+    public String create(@RequestBody MultiValueMap<String, String> formData)
+    {
         try {
-            jdbcTemplate.update(INSERT_QUERY_JSON,key ,json);
-        }
-        catch (DuplicateKeyException ex) {
+
+            formData.forEach((k, v) -> {
+                System.out.println("Key: " + k + ", Value: " + v.toString());
+                StringBuilder sb = new StringBuilder();
+                for (String s : v)
+                {
+                    sb.append(s);
+                    sb.append("\t");
+                }
+                jdbcTemplate.update(INSERT_QUERY_JSON,k ,sb);
+            });
+        } catch (DuplicateKeyException ex) {
             System.out.println("kullanici var");
             return "kullanici var";
         }
 
         return "ok";
-
     }
+
+
+    /* URLENCODED_VALUE PUT */
+    @RequestMapping(
+            value = "wform/store/{name}",
+            method = RequestMethod.PUT,
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+    )
+    public String update(@RequestBody MultiValueMap<String, String> formData,
+                         @PathVariable("name") String name) {
+        formData.forEach((k, v) -> {
+            System.out.println("Key: " + k + ", Value: " + v);
+            jdbcTemplate.update(UPDATE_QUERY_JSON,v.toString(),name);
+        });
+        return "put";
+    }
+
+
+
 
 
 }

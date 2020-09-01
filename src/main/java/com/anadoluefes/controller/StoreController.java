@@ -4,16 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @CrossOrigin
 @RestController
@@ -45,98 +45,91 @@ public class StoreController {
     }
 
 
+    /* MULTIPART_FORM POST */
+    @RequestMapping(value = "/store", method = RequestMethod.POST,
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
 
+    public ResponseEntity create(@RequestPart(value = "key")  String key ,
+                  @RequestPart(value = "json")  String json) {
+        System.out.println(key);
+        System.out.println(json);
+        try {
+            jdbcTemplate.update(INSERT_QUERY_JSON,key ,json);
+        }
+        catch (DuplicateKeyException ex) {
+            System.out.println("kullanici var");
+            return ResponseEntity.status(HttpStatus.OK).body("Kayit Mevcut");
+        }
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
+    /* GET ALL */
     @GetMapping(value ="/store",
                produces=MediaType.APPLICATION_JSON_VALUE)
-    public List<Map<String, Object>>  getAll()  {
-        List<Map<String, Object>> formdata = jdbcTemplate.queryForList(SELECT_ALL_QUERY);
-        List<Map<String, Object>> jsonformdata = new ArrayList<>();
-        Map<String, Object> jsonmap =new HashMap<>();
+    public Map<String, Object>  getAll()  {
+        List<Map<String, Object>> mapDB = jdbcTemplate.queryForList(SELECT_ALL_QUERY);
+        Map<String, Object> jsonForm =new HashMap<>();
         ObjectMapper mapper = new ObjectMapper();
 
-        formdata.forEach((temp) -> {
+        mapDB.forEach((temp) -> {
             JsonNode jsonNode = null;
             try {
                 jsonNode = mapper.readTree(temp.get(JSON_COL).toString());
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
-            jsonmap.put(temp.get(NAME_COL).toString(),jsonNode);
+            jsonForm.put(temp.get(NAME_COL).toString(),jsonNode);
         });
 
-        jsonformdata.add(jsonmap);
-        System.out.println(jsonmap);
-        System.out.println(jsonformdata);
-        return jsonformdata;
+        return jsonForm;
     }
 
+    /* GET BY FORM KEY */
     @GetMapping("/store/{name}")
-    public  List<Map<String, Object>> getByName(@PathVariable("name") String name ) {
-        System.out.println(name);
-        List<Map<String, Object>> formdata = jdbcTemplate.queryForList(SELECT_BY_NAME,name);
+    public  ResponseEntity getByName(@PathVariable("name") String name ) throws JsonProcessingException {
 
-        List<Map<String, Object>> jsonformdata = new ArrayList<>();
-        Map<String, Object> jsonmap =new HashMap<>();
-        ObjectMapper mapper = new ObjectMapper();
-
-        formdata.forEach((temp) -> {
-            JsonNode jsonNode = null;
-            try {
-                jsonNode = mapper.readTree(temp.get(JSON_COL).toString());
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            jsonmap.put(temp.get(NAME_COL).toString(),jsonNode);
-        });
-
-        jsonformdata.add(jsonmap);
-        return jsonformdata;
-    }
-
-
-    @RequestMapping(
-            value = "/store",
-            method = RequestMethod.POST,
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
-    )
-    public String create(@RequestBody MultiValueMap<String, String> formData)
-    {
+        Map<String, Object> mapDB;
         try {
-            formData.forEach((k, v) -> {
-                System.out.println("Key: " + k + ", Value: " + v);
-                jdbcTemplate.update(INSERT_QUERY_JSON,k ,v.toString());
-            });
-        } catch (DuplicateKeyException ex) {
-            System.out.println("kullanici var");
-            return "kullanici var";
+             mapDB = jdbcTemplate.queryForMap(SELECT_BY_NAME,name);
+        } catch (EmptyResultDataAccessException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Kayit Yok");
         }
 
-        return "ok";
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode ;
+        jsonNode = mapper.readTree(mapDB.get(JSON_COL).toString());
+
+        Map<String, Object> jsonForm =new HashMap<>();
+        jsonForm.put(mapDB.get(NAME_COL).toString(), jsonNode);
+
+
+        return new ResponseEntity<>(jsonForm, HttpStatus.OK);
     }
 
+    /* MULTIPART_FORM PUT */
     @RequestMapping(
-            value = "/store/{name}",
+            value = "store/{name}",
             method = RequestMethod.PUT,
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public String update(@RequestBody MultiValueMap<String, String> formData,
-                  @PathVariable("name") String name) {
-        formData.forEach((k, v) -> {
-            System.out.println("Key: " + k + ", Value: " + v);
-            jdbcTemplate.update(UPDATE_QUERY_JSON,v.toString(),name);
-            });
-        return "put";
+    public ResponseEntity update(@RequestPart(value = "key")  String key ,
+                         @RequestPart(value = "json")  String json,
+                         @PathVariable("name") String name) {
+
+            jdbcTemplate.update(UPDATE_QUERY_JSON,json ,name);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
+    /* DELETE */
     @RequestMapping(
-            value = "/store/{name}",
-            method = RequestMethod.DELETE,
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+            value = "store/{name}",
+            method = RequestMethod.DELETE
     )
-    public String delete(@PathVariable("name") String name) {
+    public ResponseEntity delete(@PathVariable("name") String name) {
         jdbcTemplate.update(DELETE_QUERY_JSON,name);
-        return "delete";
+        return new ResponseEntity(HttpStatus.OK);
     }
+
 
 
 }
