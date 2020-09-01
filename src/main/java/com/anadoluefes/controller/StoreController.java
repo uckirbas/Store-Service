@@ -1,4 +1,7 @@
 package com.anadoluefes.controller;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.MediaType;
@@ -7,6 +10,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +21,7 @@ import java.util.Map;
 public class StoreController {
 
     final String SELECT_BY_ID = "SELECT store_pair -> ? AS store_pair_value FROM test_hstore";
-    final String SELECT_ALL_QUERY = "SELECT * FROM test_store";
+    final String SELECT_ALL_QUERY = "SELECT id,name,json_field::json FROM test_store";
     final String SELECT_BY_NAME = "SELECT * FROM test_store WHERE name=?";
 
     final String INSERT_QUERY = "INSERT INTO test (name,store_pair) VALUES (?,?)";
@@ -28,6 +33,8 @@ public class StoreController {
     final String UPDATE_QUERY_JSON = "UPDATE test_store SET json_field = to_json(?::json) WHERE name = ?";
     final String DELETE_QUERY_JSON = "DELETE FROM test_store WHERE name = ?";
 
+    final String JSON_COL ="json_field";
+    final String NAME_COL ="name";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -39,18 +46,51 @@ public class StoreController {
 
 
 
-    @GetMapping("/store")
-    public List<Map<String, Object>> getAll() {
+    @GetMapping(value ="/store",
+               produces=MediaType.APPLICATION_JSON_VALUE)
+    public List<Map<String, Object>>  getAll()  {
         List<Map<String, Object>> formdata = jdbcTemplate.queryForList(SELECT_ALL_QUERY);
-        System.out.println(formdata.size());
-        return formdata;
+        List<Map<String, Object>> jsonformdata = new ArrayList<>();
+        Map<String, Object> jsonmap =new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        formdata.forEach((temp) -> {
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(temp.get(JSON_COL).toString());
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            jsonmap.put(temp.get(NAME_COL).toString(),jsonNode);
+        });
+
+        jsonformdata.add(jsonmap);
+        System.out.println(jsonmap);
+        System.out.println(jsonformdata);
+        return jsonformdata;
     }
 
     @GetMapping("/store/{name}")
-    public List<Map<String, Object>> getByName(@PathVariable("name") String name ) {
+    public  List<Map<String, Object>> getByName(@PathVariable("name") String name ) {
         System.out.println(name);
         List<Map<String, Object>> formdata = jdbcTemplate.queryForList(SELECT_BY_NAME,name);
-        return formdata;
+
+        List<Map<String, Object>> jsonformdata = new ArrayList<>();
+        Map<String, Object> jsonmap =new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        formdata.forEach((temp) -> {
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(temp.get(JSON_COL).toString());
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+            jsonmap.put(temp.get(NAME_COL).toString(),jsonNode);
+        });
+
+        jsonformdata.add(jsonmap);
+        return jsonformdata;
     }
 
 
@@ -60,18 +100,16 @@ public class StoreController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public String create(@RequestBody MultiValueMap<String, String> formData)
-            throws Exception {
-
+    {
         try {
             formData.forEach((k, v) -> {
-            System.out.println("Key: " + k + ", Value: " + v);
-            jdbcTemplate.update(INSERT_QUERY_JSON,k ,v.toString());
+                System.out.println("Key: " + k + ", Value: " + v);
+                jdbcTemplate.update(INSERT_QUERY_JSON,k ,v.toString());
             });
-            }
-        catch (DuplicateKeyException ex) {
+        } catch (DuplicateKeyException ex) {
             System.out.println("kullanici var");
             return "kullanici var";
-            }
+        }
 
         return "ok";
     }

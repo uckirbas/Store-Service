@@ -33,7 +33,7 @@ public class StoreMultipleFormController {
     private JdbcTemplate jdbcTemplate;
 
 
-    @RequestMapping(value = "/store_multiple", method = RequestMethod.POST,
+    @RequestMapping(value = "/multiple/store", method = RequestMethod.POST,
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
 
     String create(@RequestPart(value = "key")  String key ,
